@@ -1,7 +1,13 @@
-var QueuePoll = require('./queuepoll').QueuePoll;
+var PollQueue = require('./queuepoll').PollQueue;
 
-var qp = new QueuePoll('localhost', 27017, "queue", "queue");
-qp.start();
-qp.pollQuery();
+var pq = new PollQueue('localhost', 27017, "queue", "queue", 
+    {maxInterval : 500,
+     remove      : true});
 
-qp.addQuery({});
+pq.addQuery("blah", {});
+
+pq.on("message", function(doc, filterId){
+    console.log("received from ", filterId, doc);
+});
+
+pq.start();
