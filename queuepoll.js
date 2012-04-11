@@ -20,7 +20,6 @@ var PollQueue = function(host, port, dbName, collectionName, options){
     if(options && 'remove' in options){
         this.remove = options.remove;
     }
-
 }
 inherits(PollQueue, EventEmitter);
 
@@ -66,7 +65,6 @@ PollQueue.prototype.pollQuery = function(filterids, lastFullScan){
         }
         if(numRemaining == 0){
             if(activeFilters.length > 0){
-                console.log("now!");
                 process.nextTick(function(){
                     self.pollQuery(activeFilters, lastFullScan);
                 });
