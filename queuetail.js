@@ -8,6 +8,31 @@ var TailQueue = function(host, port, dbName, collectionName, options){
     EventEmitter.call(this);
     this.dbName = dbName;
     this.collectionName = collectionName;
+    var replSet = new mongodb.ReplSetServers([
+    	new mongodb.Server("10.83.146.45", 27017, {auto_reconnect:true}),
+    	new mongodb.Server("10.40.173.145", 27017, {auto_reconnect:true}),
+    	new mongodb.Server("10.100.249.64", 27017, {auto_reconnect:true}),
+	],
+    {rs_name:"mikey"});
+
+    this.db_connector = new mongodb.Db(this.dbName, replSet, {retryMiliSeconds:50});
+    this.filters = {};
+    this.increasing = "_id"
+    this.retryInterval = 100;
+    if(options && options.increasing){
+        this.increasing = options.increasing
+    }
+    if(options && options.retryInterval){
+        this.increasing = options.retryInterval
+    }
+    this.maxValue = null;
+}
+
+
+/*var TailQueue = function(host, port, dbName, collectionName, options){
+    EventEmitter.call(this);
+    this.dbName = dbName;
+    this.collectionName = collectionName;
     mongoserver = new mongodb.Server(host, port, {auto_reconnect:true}),
     this.db_connector = new mongodb.Db(this.dbName, mongoserver, {retryMiliSeconds:50});
     this.db_connector
@@ -21,7 +46,7 @@ var TailQueue = function(host, port, dbName, collectionName, options){
         this.increasing = options.retryInterval
     }
     this.maxValue = null;
-}
+}*/
 inherits(TailQueue, EventEmitter);
 
 TailQueue.prototype.addQuery = function(id, query){
@@ -89,12 +114,11 @@ TailQueue.prototype.tail = function(minValue){
                 setTimeout(function(){ self.tail(null); }, self.retryInterval);
                 return;
             }
-            console.log(cursor.cursorId.toString());
             if(doc == null ){
                 setTimeout(function(){ self.tail(null); }, self.retryInterval);
                 cursor.close();
             }else{
-                if(doc[self.increasing] > self.increasing){
+                if(self.highest == null || doc[self.increasing] > self.highest){
                     self.emit("message", doc, filterId);
                     self.highest = doc[self.increasing]
                 }else{
