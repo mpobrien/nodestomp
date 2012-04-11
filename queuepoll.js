@@ -19,6 +19,12 @@ var PollQueue = function(host, port, dbName, collectionName, options){
 
     if(options && 'remove' in options){
         this.remove = options.remove;
+        if(this.remove == true){
+            this.op = null;
+        }
+    }
+    if(options && 'op' in options){
+        this.op = options.op
     }
 }
 inherits(PollQueue, EventEmitter);
@@ -76,7 +82,11 @@ PollQueue.prototype.pollQuery = function(filterids, lastFullScan){
     for(var i=0;i<filtersToScan.length;i++){
         var filterId = filtersToScan[i]
         var filter = self.filters[filterId];
-        self.collection.findAndModify(filter, {priority:-1}, {}, {remove:true}, queueGetCallBack)
+        if(this.op != null){
+            self.collection.findAndModify(filter, {priority:-1}, this.op, {}, queueGetCallBack)
+        }else{
+            self.collection.findAndModify(filter, {priority:-1}, {}, {remove:true}, queueGetCallBack)
+        }
     }
 }
 exports.PollQueue = PollQueue;
